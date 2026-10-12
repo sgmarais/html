@@ -1,0 +1,220 @@
+<!DOCTYPE html>
+<html lang="ja"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>喫茶 燈火</title>
+<link href="https://fonts.googleapis.com/css2?family=Shippori+Mincho:wght@500;700&display=swap" rel="stylesheet">
+<style>
+:root{--w1:#26140a;--w2:#3d2212;--am:#ffb44d;--cr:#f6e3c0;--vel:#6b1d2a;--vel2:#3f0e17;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+*{box-sizing:border-box}html,body{margin:0}
+body{background:repeating-linear-gradient(90deg,#26140a 0 13px,#2d190c 13px 14px);background-color:#26140a;color:var(--cr);font-family:"Shippori Mincho","Yu Mincho","Hiragino Mincho ProN",serif;min-height:100vh}
+main{max-width:860px;margin:0 auto;padding:10px}
+header{display:flex;align-items:center;gap:10px;flex-wrap:wrap;padding:8px 12px;background:linear-gradient(#4a2814,#2f170b);border-bottom:2px solid #a8702f;box-shadow:0 4px 14px #000a}
+h1{margin:0;font-size:1.5rem;color:var(--am);text-shadow:0 0 12px #ff9a2e99;letter-spacing:.15em}
+#hd{flex:1;font-size:.9rem;display:flex;gap:12px;flex-wrap:wrap}
+button,select,input{font:inherit;color:inherit}
+button{background:linear-gradient(#8a2b3a,var(--vel2));border:1px solid #c9923f;border-radius:6px;padding:6px 12px;cursor:pointer;color:var(--cr);box-shadow:inset 0 1px #fff3}
+button:hover{filter:brightness(1.25)}button:focus-visible,input:focus-visible,select:focus-visible{outline:2px solid var(--am)}
+nav{display:flex;gap:6px;margin:10px 0;flex-wrap:wrap}nav button.on{background:linear-gradient(#ffc866,#c27a1c);color:#2a1507;font-weight:700}
+.card,#scene{background:linear-gradient(145deg,#5a1722,#3a0d15);border:1px solid #a8702f;border-radius:10px;padding:10px 12px;margin:8px 0;box-shadow:inset 0 0 22px #0007}
+.card{display:flex;gap:8px;align-items:center;flex-wrap:wrap}.card button{margin-left:auto}
+#scene{background:linear-gradient(var(--sky,#6a4a2a),#2a1508 55%);min-height:330px;position:relative;overflow:hidden}
+#scene::before{content:"";position:absolute;inset:0;background:radial-gradient(circle at 50% -10%,#ffb44d55,transparent 60%);pointer-events:none}
+#wx{position:absolute;right:12px;top:8px;font-size:1.1rem}
+#seats{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:10px;margin-top:34px;position:relative}
+.seat{background:#1d0e0688;border:1px solid #7a4d22;border-radius:10px;padding:8px;text-align:center;min-height:150px}
+.seat.empty{opacity:.4;display:grid;place-items:center}
+.face{font-size:2.2rem}.bub{background:var(--cr);color:#2a1507;border-radius:10px;padding:4px 6px;margin:4px 0;font-size:.85rem}
+.bar{height:6px;background:#0008;border-radius:3px;overflow:hidden;margin:4px 0}.bar i{display:block;height:100%;background:linear-gradient(90deg,#d94,#8c4)}
+.sv{width:100%}
+.ic{width:32px;height:32px;font-size:1.5rem;display:inline-block;text-align:center;line-height:32px;border-radius:5px;object-fit:cover;vertical-align:middle}
+#stk{display:flex;gap:12px;flex-wrap:wrap;margin-top:8px;font-size:.9rem}.low{color:#ff8a7a}
+#msg{min-height:1.4em;color:var(--am);margin-top:6px}
+#ov{position:fixed;inset:0;background:#000b;display:none;place-items:center;z-index:9}
+#ov div{background:linear-gradient(#5a1722,#2d0a11);border:2px solid var(--am);border-radius:12px;padding:20px 26px;text-align:center;line-height:1.9}
+input,select{background:#1d0e06;border:1px solid #8a5a28;border-radius:5px;padding:5px 8px}
+.row{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin:6px 0}
+canvas{width:192px;height:192px;border:3px solid #a8702f;border-radius:6px;touch-action:none;cursor:crosshair;background:#f6e3c0}
+small{opacity:.8}[hidden]{display:none!important}
+@media(prefers-reduced-motion:no-preference){.bar i{transition:width .1s linear}}
+</style></head><body><main>
+<header><h1>喫茶 燈火</h1><div id="hd"></div><button id="snd" title="音量">🔊</button><button data-a="reset">リセット</button></header>
+<nav>
+<button data-t="run" class="on">営業</button><button data-t="shop">仕入れ</button><button data-t="menu">メニュー</button><button data-t="up">改装</button><button data-t="staff">スタッフ</button><button data-t="dev">商品開発</button></nav>
+
+<section id="t-run"><div id="scene"><div id="wx"></div><div id="seats"></div></div><div id="stk"></div><div id="msg"></div></section>
+<section id="t-shop" hidden></section><section id="t-menu" hidden></section><section id="t-up" hidden></section><section id="t-staff" hidden></section>
+
+<section id="t-dev" hidden><div class="card" style="display:block">
+<h3 style="margin:0 0 6px;color:var(--am)">オリジナル商品開発（開発費 ¥300）</h3>
+<div class="row"><input id="dn" placeholder="商品名" maxlength="14"><input id="de" placeholder="絵文字" maxlength="2" style="width:80px"></div>
+<div class="row"><span id="ings" class="row"></span><button id="addi" type="button">＋材料を追加</button><label>価格 ¥<input id="dp" type="number" value="500" min="200" max="1500" step="10" style="width:90px"></label></div>
+<canvas id="cv" width="128" height="128"></canvas>
+<div class="row"><input type="color" id="cc" value="#8a2b3a"><input type="range" id="cs" min="2" max="20" value="6"><button id="cclr">消す</button><button id="cfill">背景色で塗る</button></div>
+<div class="row"><input type="file" id="cf" accept="image/*"><input id="cu" placeholder="画像URL https://..." style="flex:1;min-width:160px"><button id="cl">読込</button></div>
+<small>キャンバスに指やマウスで描画できます。画像ファイルの選択、Ctrl+Vでの貼り付け、URL読込はキャンバスに取り込まれ、その上から描き足せます。絵文字を入力するとキャンバスに同じ絵が描かれ、それが商品画像になります（上から描き足せます）。材料は同じものを複数選ぶと必要数が増えます。</small>
+<div class="row"><button data-a="dev">この商品を開発する</button></div></div>
+<div class="card" style="display:block"><h3 style="margin:0 0 6px;color:var(--am)">オリジナル材料の登録（登録費 ¥100）</h3>
+<div class="row"><input id="gn" placeholder="材料名" maxlength="10"><label>仕入れ値 ¥<input id="gc" type="number" value="40" min="10" max="200" style="width:80px"></label><button data-a="ing">材料を登録</button></div>
+<small>上のキャンバスの絵（描いていなければ絵文字欄の絵文字）が材料の絵になります。登録すると仕入れ画面で買え、商品開発の材料にも選べます。</small></div>
+<div id="cust"></div></section>
+</main>
+<div id="ov"><div id="ovc"></div></div>
+
+<script>
+const $=s=>document.querySelector(s),esc=s=>String(s).replace(/[&<>"']/g,c=>'&#'+c.charCodeAt(0)+';');
+const ING={bean:['🫘','コーヒー豆',40],milk:['🥛','牛乳',30],tea:['🍃','紅茶葉',30],egg:['🥚','卵',25],noodle:['🍝','麺',50],sugar:['🍬','砂糖',20],butter:['🧈','バター',45],flour:['🌾','小麦粉',30],fruit:['🍓','果物',60],choco:['🍫','チョコ',55]};
+const BASE=[
+{id:'blend',n:'ブレンドコーヒー',e:'☕',ing:{bean:1},p:400,u:0},
+{id:'tea',n:'ミルクティー',e:'🫖',ing:{tea:1,milk:1},p:480,u:600},
+{id:'pud',n:'レトロ昭和プリン',e:'🍮',ing:{egg:1,milk:1},p:550,u:1000},
+{id:'soda',n:'クリームソーダ',e:'🥤',ing:{milk:1},p:600,u:1200},
+{id:'napo',n:'ナポリタン',e:'🍝',ing:{noodle:1,egg:1},p:900,u:2000}];
+const UP={seat:['🪑','カウンター増強','席数 +1',l=>1500*(l+1),5],spk:['🔊','アンティークスピーカー','評判・来客数UP',l=>2000*(l+1),5],mach:['⚙️','高級コーヒーマシン','提供スピードUP',l=>2500*(l+1),4]};
+const WE=[['☀️ 晴れ',1,1],['🌧️ 雨',.6,1.3],['🎷 ジャズライブ',1.7,1]],FACE=['👨‍💼','👩','👴','👵','🧑‍🎓','👨‍🎨','👩‍💼','🧓'];
+const def=()=>({day:1,min:540,money:2000,rep:0,st:{bean:10,milk:6,tea:4,egg:4,noodle:4,sugar:4,butter:3,flour:4,fruit:3,choco:3},own:['blend'],lv:{},up:{seat:0,spk:0,mach:0},custom:[],w:0,mast:{},ings:[],pr:{},staff:[]});
+let S;try{S=JSON.parse(localStorage.getItem('tomoshibi'))||def()}catch(e){S=def()}
+S={...def(),...S};S.st={...def().st,...S.st};
+function regIng(o){ING[o.id]=[o.img?`<img src="${o.img}" alt="" style="width:1.3em;height:1.3em;vertical-align:middle;border-radius:4px">`:esc(o.e),esc(o.n),o.c,esc(o.e)];if(S.st[o.id]==null)S.st[o.id]=0}
+S.ings=S.ings||[];S.ings.forEach(regIng);
+const save=()=>{try{localStorage.setItem('tomoshibi',JSON.stringify(S))}catch(e){}};
+const items=()=>BASE.concat(S.custom),std=it=>Math.round(it.p*(1+.15*(S.lv[it.id]||0))),price=it=>Math.round((S.pr[it.id]??it.p)*(1+.15*(S.lv[it.id]||0))),pm=it=>{const q=price(it)/std(it);return q<=1?1.1:Math.max(.5,1/q)};
+const ROLE={waiter:['🧑‍🍳','ウェイター','習得済みの注文を自動で提供',800,200],barista:['☕','バリスタ見習い','調理時間を短縮',1000,250],mascot:['👧','看板娘・看板息子','来客数アップ',600,150]};
+const ic=it=>it.img?`<img class="ic" src="${it.img}" alt="">`:`<span class="ic">${esc(it.e||'🍽')}</span>`;
+let aw=0,armed='',crafting=null,C=[],T={earn:0,serve:0,lost:0},sp=4,tab='run',ended=false,last=performance.now(),mt;
+const say=t=>{$('#msg').textContent=t;clearTimeout(mt);mt=setTimeout(()=>$('#msg').textContent='',2600)};
+const arm=(x,m)=>{if(armed==x){armed='';return true}armed=x;say(m||'もう一度押すと実行します');setTimeout(()=>armed='',4000);return false};
+
+/* ---------- Audio (Web Audio API only) ---------- */
+let AC,mg,bus,mute=false,nt=0,bar=0;
+function ac(){if(!AC){AC=new(window.AudioContext||window.webkitAudioContext)();mg=AC.createGain();mg.gain.value=mute?0:.5;mg.connect(AC.destination);bus=AC.createBiquadFilter();bus.type='lowpass';bus.frequency.value=1500;bus.connect(mg)}if(AC.state=='suspended')AC.resume()}
+function tone(f,t0,d,type='sine',v=.1,dest){const o=AC.createOscillator(),g=AC.createGain();o.type=type;o.frequency.value=f;g.gain.setValueAtTime(.0001,t0);g.gain.linearRampToValueAtTime(v,t0+.02);g.gain.exponentialRampToValueAtTime(.0001,t0+d);o.connect(g);g.connect(dest||mg);o.start(t0);o.stop(t0+d+.05)}
+function noise(t0,d,fq,v,type='bandpass'){const b=AC.createBuffer(1,AC.sampleRate*d|0,AC.sampleRate),a=b.getChannelData(0);for(let i=0;i<a.length;i++)a[i]=Math.random()*2-1;const s=AC.createBufferSource();s.buffer=b;const f=AC.createBiquadFilter();f.type=type;f.frequency.value=fq;const g=AC.createGain();g.gain.setValueAtTime(v,t0);g.gain.exponentialRampToValueAtTime(.0001,t0+d);s.connect(f);f.connect(g);g.connect(mg);s.start(t0)}
+const se={
+brew(){if(!AC)return;const t=AC.currentTime;noise(t,1.4,1600,.18);noise(t+.2,1,900,.1)},
+cut(){if(!AC)return;const t=AC.currentTime;[0,.07,.15].forEach(d=>tone(3200+Math.random()*900,t+d,.08,'triangle',.05))},
+coin(){if(!AC)return;const t=AC.currentTime;tone(988,t,.1,'square',.05);tone(1319,t+.09,.3,'square',.05)},
+chime(){if(!AC)return;const t=AC.currentTime;tone(1568,t,.9,'sine',.07);tone(1175,t+.25,1.2,'sine',.07)}};
+const CH=[[50,53,57,60],[43,53,59,62],[48,52,55,59],[45,52,55,61]],PE=[62,65,67,69,72,74],fq=m=>440*2**((m-69)/12);
+setInterval(()=>{if(!AC||AC.state!='running')return;const B=2.4,q=B/4;if(nt<AC.currentTime)nt=AC.currentTime+.1;
+while(nt<AC.currentTime+1.5){const c=CH[bar%4];c.forEach(m=>tone(fq(m),nt,B*.95,'triangle',.03,bus));
+tone(fq(c[0]-12),nt,q*1.6,'sine',.13,bus);tone(fq(c[0]-5),nt+2*q,q*1.6,'sine',.11,bus);tone(fq(c[0]-12+[2,4,2,-2][bar%4]),nt+3.5*q,q*.5,'sine',.08,bus);
+for(let b=0;b<8;b++)if(b%2)noise(nt+b*q/2+q*.08,.05,7000,.015,'highpass');
+for(let b=0;b<4;b++)if(Math.random()<.55)tone(fq(PE[Math.random()*6|0]),nt+b*q+(b%2?q*.15:0),q*1.4,'sine',.035,bus);
+nt+=B;bar++}},500);
+addEventListener('pointerdown',ac);
+$('#snd').onclick=()=>{ac();mute=!mute;mg.gain.value=mute?0:.5;$('#snd').textContent=mute?'🔇':'🔊'};
+
+/* ---------- Game ---------- */
+function spawn(i){const o=items().filter(x=>S.own.includes(x.id)),it=o[Math.random()*o.length|0],m=28*WE[S.w][2]*pm(it);
+C[i]={e:FACE[Math.random()*FACE.length|0],it,pt:m,m,st:0,t:0,d:0};se.chime()}
+function serve(i){const c=C[i];if(!c||c.st)return;
+for(const k in c.it.ing)if(S.st[k]<c.it.ing[k]){say(`${ING[k][1]}が足りません。仕入れ画面で補充してください`);return}
+if(!S.mast[c.it.id]){craft(i);return}
+for(const k in c.it.ing)S.st[k]-=c.it.ing[k];
+c.st=1;c.t=0;c.d=3/(1+.4*S.up.mach)/(1+.3*S.staff.filter(x=>x.r=='barista').length);se.brew();se.cut()}
+function fin(i){const c=C[i],tip=c.pt/c.m>.5?1.2:1,pay=Math.round(price(c.it)*tip);
+S.money+=pay;T.earn+=pay;T.serve++;S.rep++;se.coin();say(`${c.it.n}を提供 +¥${pay}${tip>1?'（チップ込み）':''}`);C[i]=null}
+function endDay(){ended=true;C=[];const wg=S.staff.reduce((a,x)=>a+x.w,0);S.money-=300+wg;save();
+$('#ovc').innerHTML=`<h2 style="margin:0;color:var(--am)">本日の営業終了</h2>Day ${S.day}<br>売上 ¥${T.earn.toLocaleString()} ／ 光熱費 −¥300${wg?` ／ 人件費 −¥${wg}`:''}<br>提供 ${T.serve}杯・皿 ／ 帰ったお客さん ${T.lost}人<br>所持金 ¥${S.money.toLocaleString()}<br><button data-a="next">翌日の営業へ</button>`;
+$('#ov').style.display='grid'}
+function hd(){const h=S.min/60|0,m=(S.min%60|0),ph=S.min<660?'朝':S.min<960?'昼':'夕';
+$('#hd').innerHTML=`<span>Day ${S.day}</span><span>${ph} ${h}:${String(m).padStart(2,'0')}</span><span>¥${S.money.toLocaleString()}</span><span>評判 ${S.rep}</span>`;
+$('#wx').textContent=WE[S.w][0];
+$('#scene').style.setProperty('--sky',S.min<660?'#8a6a3a':S.min<960?'#7a5a30':'#4a2a3a');
+$('#stk').innerHTML=Object.entries(ING).map(([k,v])=>`<span class="${S.st[k]<2?'low':''}">${v[0]} ${S.st[k]}</span>`).join('')}
+function draw(){$('#seats').innerHTML=C.map((c,i)=>!c?'<div class="seat empty">空席</div>':
+`<div class="seat"><div class="face">${c.e}</div><div class="bub">${ic(c.it)}<br>${esc(c.it.n)}</div>
+<div class="bar"><i style="width:${c.st?c.t/c.d*100:c.pt/c.m*100}%"></i></div>
+${c.st?'<small>調理中…</small>':`<button class="sv" data-i="${i}">${S.mast[c.it.id]?'提供する':'初めて作る'}</button>`}</div>`).join('')}
+setInterval(()=>{const n=performance.now(),dt=Math.min((n-last)/1000,.5);last=n;if(tab!='run'||ended||crafting!=null)return;
+S.min+=dt*5;const seats=3+S.up.seat;while(C.length<seats)C.push(null);
+const rush=S.min>690&&S.min<810;sp+=dt*(1+S.rep/80+S.up.spk*.2)*WE[S.w][1]*(rush?1.5:1)*(1+.15*S.staff.filter(x=>x.r=='mascot').length);
+if(sp>5){sp=0;const i=C.indexOf(null);if(i>=0)spawn(i)}
+const nw=S.staff.filter(x=>x.r=='waiter').length;if(nw){aw+=dt*nw;if(aw>=3){aw=0;const j=C.findIndex(c=>c&&!c.st&&S.mast[c.it.id]&&Object.keys(c.it.ing).every(k=>S.st[k]>=c.it.ing[k]));if(j>=0)serve(j)}}
+C.forEach((c,i)=>{if(!c)return;if(c.st){c.t+=dt;if(c.t>=c.d)fin(i)}else{c.pt-=dt;if(c.pt<=0){C[i]=null;S.rep=Math.max(0,S.rep-1);T.lost++;say('お客さんが帰ってしまいました')}}});
+if(S.min>=1140)endDay();hd();draw()},100);
+$('#seats').addEventListener('pointerdown',e=>{const b=e.target.closest('.sv');if(b)serve(+b.dataset.i)});
+setInterval(save,5000);
+
+/* ---------- Panels ---------- */
+function panel(){hd();
+if(tab=='shop')$('#t-shop').innerHTML=Object.entries(ING).map(([k,v])=>`<div class="card"><span class="ic">${v[0]}</span><b>${v[1]}</b> 在庫 ${S.st[k]}<button data-a="buy" data-k="${k}">5個仕入れ ¥${v[2]*5}</button>${/^g\d+$/.test(k)?`<button data-a="deli" data-k="${k}">削除</button>`:''}</div>`).join('');
+if(tab=='menu')$('#t-menu').innerHTML=items().map(it=>{const o=S.own.includes(it.id),l=S.lv[it.id]||0;
+return `<div class="card">${ic(it)}<b>${esc(it.n)}</b> ¥${price(it)} Lv${l} ${S.mast[it.id]?'✅習得済':'📖未習得'}<small>${Object.entries(it.ing).map(([k,n])=>ING[k][0]+'×'+n).join(' ')}</small>`+(o?`<label><small>基本¥</small><input id="pr-${it.id}" type="number" value="${S.pr[it.id]??it.p}" min="50" max="${it.p*3}" step="10" style="width:75px"><button data-a="pr" data-k="${it.id}">価格変更</button></label>`:'')+(it.custom?`<button data-a="delp" data-k="${it.id}">削除</button>`:'')+
+(o?(l<5?`<button data-a="lv" data-k="${it.id}">強化 ¥${it.p*(l+1)*2}</button>`:'<small style="margin-left:auto">MAX</small>'):`<button data-a="unl" data-k="${it.id}">開発 ¥${it.u}</button>`)+'</div>'}).join('');
+if(tab=='staff')$('#t-staff').innerHTML=`<div class="card" style="display:block"><b>スタッフを雇う</b><div class="row"><input id="sn" placeholder="名前" maxlength="8"><select id="sr">${Object.entries(ROLE).map(([k,v])=>`<option value="${k}">${v[0]}${v[1]}（雇用 ¥${v[3]}／日給 ¥${v[4]}）</option>`).join('')}</select><button data-a="hire">雇う</button></div><small>日給は営業終了時にまとめて支払います。最大6人。</small></div>`+S.staff.map(x=>`<div class="card"><span class="ic">${x.e}</span><b>${esc(x.n)}</b> ${ROLE[x.r][1]} 日給¥${x.w}<small>${ROLE[x.r][2]}</small><button data-a="fire" data-k="${x.id}">解雇</button></div>`).join('');
+if(tab=='up')$('#t-up').innerHTML=Object.entries(UP).map(([k,u])=>{const l=S.up[k];
+return `<div class="card"><span class="ic">${u[0]}</span><b>${u[1]}</b> Lv${l}<small>${u[2]}</small>`+(l<u[4]?`<button data-a="up" data-k="${k}">改装 ¥${u[3](l)}</button>`:'<small style="margin-left:auto">MAX</small>')+'</div>'}).join('');
+}
+document.querySelectorAll('nav button').forEach(b=>b.onclick=()=>{tab=b.dataset.t;document.querySelectorAll('nav button').forEach(x=>x.classList.toggle('on',x==b));
+['run','shop','menu','up','staff','dev'].forEach(t=>$('#t-'+t).hidden=t!=tab);last=performance.now();panel()});
+const opts=f=>(f?'':'<option value="">（なし）</option>')+Object.entries(ING).map(([k,v])=>`<option value="${k}">${v[3]||v[0]}${v[1]}</option>`).join('');
+const refreshSlots=()=>document.querySelectorAll('.ig').forEach((x,i)=>{const v=x.value;x.innerHTML=opts(!i);x.value=v});
+function addSlot(){const n=document.querySelectorAll('.ig').length;if(n>=6){say('材料は6つまでです');return}
+const sl=document.createElement('select');sl.className='ig';
+sl.innerHTML=opts(!n);$('#ings').appendChild(sl)}
+addSlot();$('#addi').onclick=addSlot;
+
+document.addEventListener('click',e=>{const b=e.target.closest('[data-a]');if(!b)return;ac();const a=b.dataset.a,k=b.dataset.k;
+const pay=c=>{if(S.money<c){say('所持金が足りません');return false}S.money-=c;se.coin();return true};
+if(a=='buy'&&pay(ING[k][2]*5))S.st[k]+=5;
+if(a=='unl'){const it=items().find(x=>x.id==k);if(pay(it.u))S.own.push(k)}
+if(a=='lv'){const it=items().find(x=>x.id==k),l=S.lv[k]||0;if(pay(it.p*(l+1)*2))S.lv[k]=l+1}
+if(a=='up'&&pay(UP[k][3](S.up[k])))S.up[k]++;
+if(a=='dev')devItem();
+if(a=='ing')ingItem();
+if(a=='pr'){const it=items().find(x=>x.id==k),v=Math.round(+$('#pr-'+k).value);if(v>=50&&v<=it.p*3){S.pr[k]=v;say(`${it.n}の基本価格を¥${v}にしました。標準より高いとお客さんの忍耐が短くなります`)}else say(`価格は¥50〜¥${it.p*3}の範囲で指定してください`)}
+if(a=='delp'&&arm('delp'+k)){S.custom=S.custom.filter(x=>x.id!=k);S.own=S.own.filter(x=>x!=k);delete S.lv[k];delete S.mast[k];delete S.pr[k];C=C.map(c=>c&&c.it.id==k?null:c)}
+if(a=='deli'){const u=S.custom.find(x=>x.ing[k]);if(u)say(`商品「${u.n}」で使用中のため削除できません`);else if(arm('deli'+k)){S.ings=S.ings.filter(x=>x.id!=k);delete ING[k];delete S.st[k];refreshSlots()}}
+if(a=='hire'){const rl=$('#sr').value,n=$('#sn').value.trim()||ROLE[rl][1];if(S.staff.length>=6)say('スタッフは6人までです');else if(pay(ROLE[rl][3]))S.staff.push({id:'s'+Date.now(),n,r:rl,e:ROLE[rl][0],w:ROLE[rl][4]})}
+if(a=='fire'&&arm('fire'+k))S.staff=S.staff.filter(x=>x.id!=k);
+if(a=='cx'){crafting=null;$('#ov').style.display='none'}
+if(a=='next'){S.day++;S.min=540;S.w=Math.random()<.5?0:Math.random()<.5?1:2;T={earn:0,serve:0,lost:0};C=[];sp=4;ended=false;$('#ov').style.display='none'}
+if(a=='reset'&&arm('reset','もう一度押すとセーブデータを消去します')){Object.keys(ING).forEach(k=>/^g\d+$/.test(k)&&delete ING[k]);S=def();C=[];T={earn:0,serve:0,lost:0};ended=false;$('#ov').style.display='none';localStorage.removeItem('tomoshibi')}
+save();panel();custList()});
+
+/* ---------- 初回は自分で作る ---------- */
+const STEP={bean:'豆を挽く',milk:'牛乳を温める',tea:'茶葉を蒸らす',egg:'卵を割る',noodle:'麺を茹でる',sugar:'砂糖を溶かす',butter:'バターを溶かす',flour:'粉をふるう',fruit:'果物を切る',choco:'チョコを湯せん'};let cs=null;
+function craft(i){const it=C[i].it,st=Object.keys(it.ing).map(k=>[ING[k][0],STEP[k]||ING[k][1]+'を用意']);st.push(['🍽️','器に盛る']);
+cs={i,st,n:0,msg:'',ord:st.map((_,j)=>j).sort(()=>Math.random()-.5)};crafting=i;se.brew();craftUI()}
+function craftUI(){const{st,n,ord,msg}=cs;
+$('#ovc').innerHTML=`<h2 style="margin:0;color:var(--am)">${esc(C[cs.i].it.n)}を初めて作る</h2><small>正しい順番で手順を押してください。一度作れば、次からはすぐ提供できます。</small><div>${st.slice(0,n).map(x=>x[0]).join(' ')||'&nbsp;'}</div><div class="row" style="justify-content:center">${ord.map(j=>j<n?'':`<button data-s="${j}">${st[j][0]} ${st[j][1]}</button>`).join('')}</div><div style="color:#ff8a7a;min-height:1.4em">${msg}</div><button data-a="cx">やめる</button>`;
+$('#ov').style.display='grid'}
+document.addEventListener('click',e=>{const b=e.target.closest('[data-s]');if(!b||!cs||crafting==null)return;ac();
+if(+b.dataset.s!=cs.n){cs.msg='順番が違います';craftUI();return}
+cs.n++;cs.msg='';se.cut();if(cs.n<cs.st.length){craftUI();return}
+const c=C[cs.i];for(const k in c.it.ing)S.st[k]-=c.it.ing[k];S.mast[c.it.id]=1;c.st=1;c.t=0;c.d=.4;crafting=null;cs=null;
+$('#ov').style.display='none';se.chime();say(`「${c.it.n}」を習得しました。次からはすぐ提供できます`);save();hd()});
+
+/* ---------- Product development & drawing ---------- */
+const cv=$('#cv'),g=cv.getContext('2d');let dirty=0,dr=0,lx,ly;
+function clr(){g.fillStyle='#f6e3c0';g.fillRect(0,0,128,128);dirty=0}clr();
+const pos=e=>{const r=cv.getBoundingClientRect();return[(e.clientX-r.left)*128/r.width,(e.clientY-r.top)*128/r.height]};
+function stroke(a,b,c,d){g.strokeStyle=g.fillStyle=$('#cc').value;g.lineWidth=$('#cs').value;g.lineCap='round';g.beginPath();g.moveTo(a,b);g.lineTo(c,d);g.stroke();dirty=1}
+cv.onpointerdown=e=>{dr=1;cv.setPointerCapture(e.pointerId);[lx,ly]=pos(e);stroke(lx,ly,lx,ly)};
+cv.onpointermove=e=>{if(dr){const[x,y]=pos(e);stroke(lx,ly,x,y);lx=x;ly=y}};
+cv.onpointerup=()=>dr=0;
+$('#de').oninput=()=>{const v=$('#de').value.trim();if(!v)return;clr();g.font='96px serif';g.textAlign='center';g.textBaseline='middle';g.fillText(v,64,70);dirty=1};
+$('#cclr').onclick=clr;$('#cfill').onclick=()=>{g.fillStyle=$('#cc').value;g.fillRect(0,0,128,128);dirty=1};
+function put(src){const im=new Image();im.crossOrigin='anonymous';
+im.onload=()=>{const s=Math.max(128/im.width,128/im.height),w=im.width*s,h=im.height*s;g.drawImage(im,(128-w)/2,(128-h)/2,w,h);dirty=1;
+try{cv.toDataURL()}catch(e){clr();alert('この画像は保存できません（外部サイトの制限）。画像を保存してファイル選択か貼り付けで取り込んでください')}};
+im.onerror=()=>alert('画像を読み込めませんでした。この公開ページでは外部サイトの画像がブロックされることがあります。ファイル選択か貼り付けをお試しください');
+im.src=src}
+$('#cf').onchange=e=>{const f=e.target.files[0];if(f)put(URL.createObjectURL(f))};
+$('#cl').onclick=()=>{const u=$('#cu').value.trim();if(u)put(u)};
+addEventListener('paste',e=>{if(tab!='dev')return;for(const it of e.clipboardData.items)if(it.type.startsWith('image/')){put(URL.createObjectURL(it.getAsFile()));break}});
+function devItem(){const n=$('#dn').value.trim(),p=Math.max(200,Math.min(1500,+$('#dp').value||500));
+if(!n){say('商品名を入力してください');return}
+if(S.money<300){say('開発費 ¥300 が足りません');return}
+const ing={};document.querySelectorAll('.ig').forEach(x=>{if(x.value)ing[x.value]=(ing[x.value]||0)+1});
+const it={id:'c'+Date.now(),n,e:$('#de').value.trim()||'🍽',img:dirty?cv.toDataURL('image/png'):null,ing,p,u:0,custom:1};
+S.money-=300;S.custom.push(it);S.own.push(it.id);S.lv[it.id]=0;se.coin();say(`「${n}」を開発しました。メニューに追加されます`);$('#dn').value='';$('#de').value='';clr()}
+function ingItem(){const n=$('#gn').value.trim(),c=Math.max(10,Math.min(200,+$('#gc').value||40));
+if(!n){say('材料名を入力してください');return}
+if(S.money<100){say('登録費 ¥100 が足りません');return}
+const o={id:'g'+Date.now(),n,c,e:$('#de').value.trim()||'🧪',img:dirty?cv.toDataURL('image/png'):null};
+S.money-=100;S.ings.push(o);regIng(o);se.coin();say(`材料「${n}」を登録しました。仕入れ画面で買えます`);$('#gn').value='';$('#de').value='';clr();refreshSlots()}
+function custList(){$('#cust').innerHTML=S.custom.map(it=>`<div class="card">${ic(it)}<b>${esc(it.n)}</b> ¥${price(it)}<small>${Object.entries(it.ing).map(([k,n])=>ING[k][0]+'×'+n).join(' ')}</small></div>`).join('')}
+custList();panel();
+</script></body></html>
